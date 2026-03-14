@@ -75,21 +75,18 @@ export default class MetadataMover extends Plugin {
 			}
 		}
 
-		// 3) type mapping
-		const typeVal = String(frontmatter.type ?? "").trim().toLowerCase();
-		let targetDir = "";
-		if (typeVal === "project") {
-			targetDir = "Projects";
-		} else if (typeVal === "area") {
-			targetDir = "Areas";
-		} else if (typeVal === "resource") {
-			targetDir = "Resources";
-		} else {
-			new Notice("No move rule matched (status not completed, not same up-folder, type not project/area/resource).\nNo action taken.");
+		// 3) mapping rules from user-configured settings
+		const ruleMatch = (this.settings.rules || []).find(rule => {
+			const value = String(frontmatter[rule.property] ?? "").trim().toLowerCase();
+			return value === String(rule.value ?? "").trim().toLowerCase();
+		});
+
+		if (ruleMatch) {
+			await this.ensureAndMove(file, ruleMatch.folder);
 			return;
 		}
 
-		await this.ensureAndMove(file, targetDir);
+		new Notice("No mapping rule matched; no action taken.");
 	}
 
 	private resolveUpFile(upValue: string, currentFilePath: string): TFile | null {
