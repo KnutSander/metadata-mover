@@ -1,4 +1,4 @@
-import {App, PluginSettingTab, Setting, Notice} from "obsidian";
+import { App, PluginSettingTab, Setting, Notice } from "obsidian";
 import MetadataMover from "./main";
 
 export interface MappingRule {
@@ -26,7 +26,7 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 	}
 
 	display(): void {
-		const {containerEl} = this;
+		const { containerEl } = this;
 
 		containerEl.empty();
 
@@ -56,6 +56,26 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.rules[index].folder = value.trim();
 						await this.plugin.saveSettings();
+					}))
+				.addButton(button => button
+					.setIcon('arrow-up')
+					.setTooltip('Move mapping up')
+					.onClick(async () => {
+						if (index <= 0) return;
+						const rules = this.plugin.settings.rules;
+						[rules[index - 1], rules[index]] = [rules[index], rules[index - 1]];
+						await this.plugin.saveSettings();
+						this.display();
+					}))
+				.addButton(button => button
+					.setIcon('arrow-down')
+					.setTooltip('Move mapping down')
+					.onClick(async () => {
+						const rules = this.plugin.settings.rules;
+						if (index >= rules.length - 1) return;
+						[rules[index], rules[index + 1]] = [rules[index + 1], rules[index]];
+						await this.plugin.saveSettings();
+						this.display();
 					}))
 				.addButton(button => button
 					.setIcon('trash')

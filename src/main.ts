@@ -1,10 +1,11 @@
-import { MarkdownView, Notice, Plugin, TFile } from 'obsidian';
+import { MarkdownView, Notice, Plugin, TFile, parseYaml } from 'obsidian';
 import { DEFAULT_SETTINGS, MetadataMoverSettings, MetadataMoverSettingsTab } from "./settings";
 
 // Remember to rename these classes and interfaces!
 
 export default class MetadataMover extends Plugin {
 	settings: MetadataMoverSettings;
+	private frontmatterHashes: Map<string, string> = new Map();
 
 	async onload() {
 		await this.loadSettings();
@@ -15,10 +16,27 @@ export default class MetadataMover extends Plugin {
 			checkCallback: (checking: boolean) => {
 				const mdView = this.app.workspace.getActiveViewOfType(MarkdownView);
 				if (!mdView || !mdView.file) return false;
-				if (!checking) void this.moveActiveFileByFrontmatter(mdView);
+				if (!checking) void this.moveFileByFrontmatter(mdView.file);
 				return true;
 			},
 		});
+
+		this.registerEvent(this.app.vault.on('modify', (file) => {
+			if (!(file instanceof TFile) || file.extension !== 'md') return;
+
+			setTimeout(async () => {
+				const content = await this.app.vault.read(file);
+				const fm = this.parseFrontmatterFromContent(content);
+				if (!fm) return;
+
+				const currentHash = JSON.stringify(fm);
+				const previousHash = this.frontmatterHashes.get(file.path);
+				if (currentHash === previousHash) return;
+
+				this.frontmatterHashes.set(file.path, currentHash);
+				await this.moveFileByFrontmatter(file, fm);
+			}, 50);
+		}));
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new MetadataMoverSettingsTab(this.app, this));
@@ -36,15 +54,13 @@ export default class MetadataMover extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	async moveActiveFileByFrontmatter(view: MarkdownView) {
-		const file = view.file;
-		if (!file) {
-			new Notice("No active file to move.");
-			return;
+	async moveFileByFrontmatter(file: TFile, frontmatter?: Record<string, any>) {
+		let fm = frontmatter;
+		if (!fm) {
+			const content = await this.app.vault.read(file);
+			fm = this.parseFrontmatterFromContent(content);
 		}
-		const cached = this.app.metadataCache.getFileCache(file);
-		const frontmatter = cached?.frontmatter;
-		if (!frontmatter) {
+		if (!fm) {
 			new Notice("No frontmatter found.");
 			return;
 		}
@@ -99,6 +115,17 @@ export default class MetadataMover extends Plugin {
 		const target = match[1].trim();
 		const resolved = this.app.metadataCache.getFirstLinkpathDest(target, currentFilePath);
 		return resolved instanceof TFile ? resolved : null;
+	}
+
+	private parseFrontmatterFromContent(content: string): Record<string, any> | null {
+		const fmMatch = content.match(/^---\s*\n([\s\S]*?)\n---\s*\n?/);
+		if (!fmMatch) return null;
+		try {
+			return parseYaml(fmMatch[1]) as Record<string, any>;
+		} catch (error) {
+			console.error('Failed to parse frontmatter', error);
+			return null;
+		}
 	}
 
 	private async ensureAndMove(file: TFile, targetDir: string) {
