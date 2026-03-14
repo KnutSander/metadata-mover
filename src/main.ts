@@ -1,4 +1,4 @@
-import { MarkdownView, Notice, Plugin, TFile, parseYaml } from 'obsidian';
+import { MarkdownView, Notice, Plugin, TFile } from 'obsidian';
 import { DEFAULT_SETTINGS, MetadataMoverSettings, MetadataMoverSettingsTab } from "./settings";
 
 // Remember to rename these classes and interfaces!
@@ -25,8 +25,8 @@ export default class MetadataMover extends Plugin {
 			if (!(file instanceof TFile) || file.extension !== 'md') return;
 
 			setTimeout(async () => {
-				const content = await this.app.vault.read(file);
-				const fm = this.parseFrontmatterFromContent(content);
+				const cached = this.app.metadataCache.getFileCache(file);
+				const fm = cached?.frontmatter;
 				if (!fm) return;
 
 				const currentHash = JSON.stringify(fm);
@@ -57,8 +57,8 @@ export default class MetadataMover extends Plugin {
 	async moveFileByFrontmatter(file: TFile, frontmatter?: Record<string, any>) {
 		let fm = frontmatter;
 		if (!fm) {
-			const content = await this.app.vault.read(file);
-			fm = this.parseFrontmatterFromContent(content);
+			const cached = this.app.metadataCache.getFileCache(file);
+			fm = cached?.frontmatter;
 		}
 		if (!fm) {
 			new Notice("No frontmatter found.");
@@ -107,20 +107,12 @@ export default class MetadataMover extends Plugin {
 			return null;
 		}
 
-		const target = match[1].trim();
-		const resolved = this.app.metadataCache.getFirstLinkpathDest(target, currentFilePath);
-		return resolved instanceof TFile ? resolved : null;
-	}
-
-	private parseFrontmatterFromContent(content: string): Record<string, any> | null {
-		const fmMatch = content.match(/^---\s*\n([\s\S]*?)\n---\s*\n?/);
-		if (!fmMatch) return null;
-		try {
-			return parseYaml(fmMatch[1]) as Record<string, any>;
-		} catch (error) {
-			console.error('Failed to parse frontmatter', error);
+		const target = (match[1] ?? '').trim();
+		if (!target) {
 			return null;
 		}
+		const resolved = this.app.metadataCache.getFirstLinkpathDest(target, currentFilePath);
+		return resolved instanceof TFile ? resolved : null;
 	}
 
 	private async ensureAndMove(file: TFile, targetDir: string) {

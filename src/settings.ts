@@ -61,21 +61,27 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 					.setPlaceholder('property')
 					.setValue(rule.property)
 					.onChange(async (value) => {
-						this.plugin.settings.rules[index].property = value.trim();
+						const ruleToUpdate = this.plugin.settings.rules[index];
+						if (!ruleToUpdate) return;
+						ruleToUpdate.property = value.trim();
 						await this.plugin.saveSettings();
 					}))
 				.addText(text => text
 					.setPlaceholder('value')
 					.setValue(rule.value)
 					.onChange(async (value) => {
-						this.plugin.settings.rules[index].value = value.trim();
+						const ruleToUpdate = this.plugin.settings.rules[index];
+						if (!ruleToUpdate) return;
+						ruleToUpdate.value = value.trim();
 						await this.plugin.saveSettings();
 					}))
 				.addText(text => text
 					.setPlaceholder('folder')
 					.setValue(rule.folder)
 					.onChange(async (value) => {
-						this.plugin.settings.rules[index].folder = value.trim();
+						const ruleToUpdate = this.plugin.settings.rules[index];
+						if (!ruleToUpdate) return;
+						ruleToUpdate.folder = value.trim();
 						await this.plugin.saveSettings();
 					}))
 				.addButton(button => button
@@ -84,7 +90,11 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 					.onClick(async () => {
 						if (index <= 0) return;
 						const rules = this.plugin.settings.rules;
-						[rules[index - 1], rules[index]] = [rules[index], rules[index - 1]];
+						const a = rules[index - 1];
+						const b = rules[index];
+						if (!a || !b) return;
+						rules[index - 1] = b;
+						rules[index] = a;
 						await this.plugin.saveSettings();
 						this.display();
 					}))
@@ -94,7 +104,11 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 					.onClick(async () => {
 						const rules = this.plugin.settings.rules;
 						if (index >= rules.length - 1) return;
-						[rules[index], rules[index + 1]] = [rules[index + 1], rules[index]];
+						const a = rules[index];
+						const b = rules[index + 1];
+						if (!a || !b) return;
+						rules[index] = b;
+						rules[index + 1] = a;
 						await this.plugin.saveSettings();
 						this.display();
 					}))
