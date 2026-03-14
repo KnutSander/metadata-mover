@@ -4,8 +4,8 @@
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "Moves files to specific folders based on their frontmatter metadata.",
-	"author": "me",
-	"authorUrl": "https://obsidian.md",
+	"author": "KnutSander",
+	"authorUrl": "https://github.com/KnutSander",
 	"fundingUrl": "https://obsidian.md/pricing",
 	"isDesktopOnly": false
 }
