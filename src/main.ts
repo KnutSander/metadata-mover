@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, TFile } from 'obsidian';
+import { MarkdownView, Notice, Plugin, TFile } from 'obsidian';
 import { DEFAULT_SETTINGS, MetadataMoverSettings, MetadataMoverSettingsTab } from "./settings";
 
 // Remember to rename these classes and interfaces!
@@ -90,26 +90,15 @@ export default class MetadataMover extends Plugin {
 	}
 
 	private resolveUpFile(upValue: string, currentFilePath: string): TFile | null {
-		let link = upValue.trim();
-
-		// up is always a wiki link: [[Some Note]] or [[some/path|alias]]
-		const wikiMatch = link.match(/^\s*\[\[([^\]]+)\]\]\s*$/);
-		if (!wikiMatch) {
+		// In this vault, `up` is always a plain wiki link like [[(Project) - Foo]]
+		const match = String(upValue).trim().match(/^\[\[([^\]]+)\]\]$/);
+		if (!match) {
 			return null;
 		}
-		link = wikiMatch[1];
 
-		// alias: `Some Note|text` -> Some Note
-		if (link.includes("|")) {
-			link = link.split("|")[0].trim();
-		}
-
-		const resolved = this.app.metadataCache.getFirstLinkpathDest(link, currentFilePath);
-		if (resolved instanceof TFile) {
-			return resolved;
-		}
-
-		return null;
+		const target = match[1].trim();
+		const resolved = this.app.metadataCache.getFirstLinkpathDest(target, currentFilePath);
+		return resolved instanceof TFile ? resolved : null;
 	}
 
 	private async ensureAndMove(file: TFile, targetDir: string) {
