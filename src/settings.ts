@@ -34,6 +34,8 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 
 		containerEl.empty();
 
+		containerEl.createEl('h2', { text: 'Metadata Mover Settings' });
+
 		new Setting(containerEl)
 			.setName('Up mapping field')
 			.setDesc('Frontmatter property that points to parent note (up link)')
