@@ -1,18 +1,18 @@
 import {App, PluginSettingTab, Setting} from "obsidian";
-import MyPlugin from "./main";
+import MetadataMover from "./main";
 
-export interface MyPluginSettings {
+export interface MetadataMoverSettings {
 	mySetting: string;
 }
 
-export const DEFAULT_SETTINGS: MyPluginSettings = {
+export const DEFAULT_SETTINGS = {
 	mySetting: 'default'
 }
 
-export class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+export class MetadataMoverSettingsTab extends PluginSettingTab {
+	plugin: MetadataMover;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: MetadataMover) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
