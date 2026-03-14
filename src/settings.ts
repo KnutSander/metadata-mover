@@ -10,11 +10,15 @@ export interface MappingRule {
 export interface MetadataMoverSettings {
 	mySetting: string;
 	rules: MappingRule[];
+	upProperty: string;
+	enableUpRule: boolean;
 }
 
 export const DEFAULT_SETTINGS: MetadataMoverSettings = {
 	mySetting: '',
 	rules: [],
+	upProperty: 'up',
+	enableUpRule: true,
 };
 
 export class MetadataMoverSettingsTab extends PluginSettingTab {
@@ -30,12 +34,27 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('h3', { text: 'Field:value → Folder Mapping' });
+		new Setting(containerEl)
+			.setName('Up mapping field')
+			.setDesc('Frontmatter property that points to parent note (up link)')
+			.addText(text => text
+				.setPlaceholder('property (e.g. up)')
+				.setValue(this.plugin.settings.upProperty)
+				.onChange(async (value) => {
+					this.plugin.settings.upProperty = value.trim();
+					await this.plugin.saveSettings();
+				}))
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.enableUpRule)
+				.onChange(async (value) => {
+					this.plugin.settings.enableUpRule = value;
+					await this.plugin.saveSettings();
+				}));
+
+		containerEl.createEl('h3', { text: 'Property:Value → Folder Mapping' });
 
 		this.plugin.settings.rules.forEach((rule, index) => {
 			new Setting(containerEl)
-				.setName(`${rule.property}:${rule.value}`)
-				.setDesc(`Move when ${rule.property} = ${rule.value}`)
 				.addText(text => text
 					.setPlaceholder('property')
 					.setValue(rule.property)
@@ -95,7 +114,7 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 			.setName('Add new mapping')
 			.setDesc('Configure property:value → folder rules')
 			.addText(text => text
-				.setPlaceholder('property (e.g. type, category)')
+				.setPlaceholder('property (e.g. type)')
 				.onChange((value) => newProperty = value.trim()))
 			.addText(text => text
 				.setPlaceholder('value (e.g. project)')

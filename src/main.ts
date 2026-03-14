@@ -65,35 +65,30 @@ export default class MetadataMover extends Plugin {
 			return;
 		}
 
-		// 1) completed status -> Archive
-		const status = String(frontmatter.status ?? "").trim().toLowerCase();
-		if (status === "completed") {
-			await this.ensureAndMove(file, "Archives"); 
-			return;
-		}
-
 		const currentFolder = file.parent?.path ?? "";
 
-		// 2) if `up` points to a file, move this note to `up` file folder
-		const upVal = frontmatter.up;
-		if (typeof upVal === "string" && upVal.trim().length > 0) {
-			const upFile = this.resolveUpFile(upVal, file.path);
-			if (upFile) {
-				const upFolder = upFile.parent?.path;
-				if (upFolder) {
-					if (upFolder === currentFolder) {
-						new Notice("Note is already in the same folder as its 'up' note.");
+		if (this.settings.enableUpRule) {
+			const upField = this.settings.upProperty;
+			const upVal = fm[upField];
+			if (typeof upVal === "string" && upVal.trim().length > 0) {
+				const upFile = this.resolveUpFile(upVal, file.path);
+				if (upFile) {
+					const upFolder = upFile.parent?.path;
+					if (upFolder) {
+						if (upFolder === currentFolder) {
+							new Notice("Note is already in the same folder as its 'up' note.");
+							return;
+						}
+						await this.ensureAndMove(file, upFolder);
 						return;
 					}
-					await this.ensureAndMove(file, upFolder);
-					return;
 				}
 			}
 		}
 
 		// 3) mapping rules from user-configured settings
 		const ruleMatch = (this.settings.rules || []).find(rule => {
-			const value = String(frontmatter[rule.property] ?? "").trim().toLowerCase();
+			const value = String(fm[rule.property] ?? "").trim().toLowerCase();
 			return value === String(rule.value ?? "").trim().toLowerCase();
 		});
 
