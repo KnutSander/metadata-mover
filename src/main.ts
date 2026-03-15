@@ -10,17 +10,6 @@ export default class MetadataMover extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		this.addCommand({
-			id: "move-note-by-frontmatter",
-			name: "Move note by frontmatter property",
-			checkCallback: (checking: boolean) => {
-				const mdView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (!mdView || !mdView.file) return false;
-				if (!checking) void this.moveFileByFrontmatter(mdView.file);
-				return true;
-			},
-		});
-
 		this.registerEvent(this.app.vault.on('modify', (file) => {
 			if (!(file instanceof TFile) || file.extension !== 'md') return;
 
@@ -67,15 +56,6 @@ export default class MetadataMover extends Plugin {
 
 		const currentFolder = file.parent?.path ?? "";
 
-		if ((this.settings.excludeFolders || []).some(excluded => {
-			const trimmed = (excluded || "").trim();
-			if (!trimmed) return false;
-			if (trimmed === currentFolder) return true;
-			return file.path.startsWith(`${trimmed}/`);
-		})) {
-			return;
-		}
-
 		if (this.settings.enableUpRule) {
 			const upField = this.settings.upProperty;
 			const upVal = fm[upField];
@@ -85,6 +65,7 @@ export default class MetadataMover extends Plugin {
 					const upFolder = upFile.parent?.path;
 					if (upFolder) {
 						if (upFolder === currentFolder) {
+							new Notice("Note is already in the same folder as its 'up' note.");
 							return;
 						}
 						await this.ensureAndMove(file, upFolder);
@@ -104,6 +85,8 @@ export default class MetadataMover extends Plugin {
 			await this.ensureAndMove(file, ruleMatch.folder);
 			return;
 		}
+
+		new Notice("No mapping rule matched; no action taken.");
 	}
 
 	private resolveUpFile(upValue: string, currentFilePath: string): TFile | null {
@@ -124,6 +107,7 @@ export default class MetadataMover extends Plugin {
 	private async ensureAndMove(file: TFile, targetDir: string) {
 		const targetPath = `${targetDir}/${file.name}`;
 		if (file.path === targetPath) {
+			new Notice("Already in target folder; no move needed.");
 			return;
 		}
 
