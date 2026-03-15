@@ -12,6 +12,7 @@ export interface MetadataMoverSettings {
 	rules: MappingRule[];
 	upProperty: string;
 	enableUpRule: boolean;
+	excludeFolders: string[];
 }
 
 export const DEFAULT_SETTINGS: MetadataMoverSettings = {
@@ -19,6 +20,7 @@ export const DEFAULT_SETTINGS: MetadataMoverSettings = {
 	rules: [],
 	upProperty: 'up',
 	enableUpRule: true,
+	excludeFolders: [],
 };
 
 export class MetadataMoverSettingsTab extends PluginSettingTab {
@@ -52,6 +54,24 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 					this.plugin.settings.enableUpRule = value;
 					await this.plugin.saveSettings();
 				}));
+
+		containerEl.createEl('h3', { text: 'Folders to exclude' });
+
+		new Setting(containerEl)
+			.setName('Excluded folders')
+			.setDesc('One folder per line (relative to vault). Notes inside these folders are ignored')
+			.addTextArea(text => text
+				.setPlaceholder('folder1\nfolder2/subfolder')
+				.setValue((this.plugin.settings.excludeFolders || []).join('\n'))
+				.onChange(async (value) => {
+					const folders = value
+						.split('\n')
+						.map(line => line.trim())
+						.filter(line => line.length > 0);
+					this.plugin.settings.excludeFolders = folders;
+					await this.plugin.saveSettings();
+				}));
+
 
 		containerEl.createEl('h3', { text: 'Property:Value → Folder Mapping' });
 
