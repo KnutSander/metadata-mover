@@ -56,6 +56,16 @@ export default class MetadataMover extends Plugin {
 
 		const currentFolder = file.parent?.path ?? "";
 
+		if ((this.settings.excludeFolders || []).some(excluded => {
+			const trimmed = (excluded || "").trim();
+			if (!trimmed) return false;
+			if (trimmed === currentFolder) return true;
+			return file.path.startsWith(`${trimmed}/`);
+		})) {
+			new Notice(`File is in excluded folder; skipping: ${currentFolder}`);
+			return;
+		}
+
 		if (this.settings.enableUpRule) {
 			const upField = this.settings.upProperty;
 			const upVal = fm[upField];
