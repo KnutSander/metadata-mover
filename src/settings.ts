@@ -36,13 +36,15 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', { text: 'Metadata Mover Settings' });
+		new Setting(containerEl)
+			.setName('Up note behavior')
+			.setHeading();
 
 		new Setting(containerEl)
 			.setName('Up mapping field')
 			.setDesc('Frontmatter property that points to parent note (up link)')
 			.addText(text => text
-				.setPlaceholder('property (e.g. up)')
+				.setPlaceholder('Property such as up')
 				.setValue(this.plugin.settings.upProperty)
 				.onChange(async (value) => {
 					this.plugin.settings.upProperty = value.trim();
@@ -55,13 +57,15 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
-		containerEl.createEl('h3', { text: 'Folders to exclude' });
+		new Setting(containerEl)
+			.setName('Folders to exclude')
+			.setHeading();
 
 		new Setting(containerEl)
 			.setName('Excluded folders')
 			.setDesc('One folder per line (relative to vault). Notes inside these folders are ignored')
 			.addTextArea(text => text
-				.setPlaceholder('folder1\nfolder2/subfolder')
+				.setPlaceholder('Folder 1\nfolder2/subfolder')
 				.setValue((this.plugin.settings.excludeFolders || []).join('\n'))
 				.onChange(async (value) => {
 					const folders = value
@@ -73,12 +77,14 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 				}));
 
 
-		containerEl.createEl('h3', { text: 'Property:Value → Folder Mapping' });
+		new Setting(containerEl)
+			.setName('Property:value → folder mapping')
+			.setHeading();
 
 		this.plugin.settings.rules.forEach((rule, index) => {
 			new Setting(containerEl)
 				.addText(text => text
-					.setPlaceholder('property')
+					.setPlaceholder('Property')
 					.setValue(rule.property)
 					.onChange(async (value) => {
 						const ruleToUpdate = this.plugin.settings.rules[index];
@@ -87,7 +93,7 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					}))
 				.addText(text => text
-					.setPlaceholder('value')
+					.setPlaceholder('Value')
 					.setValue(rule.value)
 					.onChange(async (value) => {
 						const ruleToUpdate = this.plugin.settings.rules[index];
@@ -96,7 +102,7 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					}))
 				.addText(text => text
-					.setPlaceholder('folder')
+					.setPlaceholder('Folder')
 					.setValue(rule.folder)
 					.onChange(async (value) => {
 						const ruleToUpdate = this.plugin.settings.rules[index];
@@ -116,7 +122,7 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 						rules[index - 1] = b;
 						rules[index] = a;
 						await this.plugin.saveSettings();
-						this.display();
+						this.refreshSettingsDisplay();
 					}))
 				.addButton(button => button
 					.setIcon('arrow-down')
@@ -130,7 +136,7 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 						rules[index] = b;
 						rules[index + 1] = a;
 						await this.plugin.saveSettings();
-						this.display();
+						this.refreshSettingsDisplay();
 					}))
 				.addButton(button => button
 					.setIcon('trash')
@@ -138,7 +144,7 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 					.onClick(async () => {
 						this.plugin.settings.rules.splice(index, 1);
 						await this.plugin.saveSettings();
-						this.display();
+						this.refreshSettingsDisplay();
 					}));
 		});
 
@@ -148,15 +154,15 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Add new mapping')
-			.setDesc('Configure property:value → folder rules')
+			.setDesc('Configure property:value → folder rules. Use semicolons for and logic, for example: type;status → project;archived')
 			.addText(text => text
-				.setPlaceholder('property (e.g. type)')
+				.setPlaceholder('Property such as type')
 				.onChange((value) => newProperty = value.trim()))
 			.addText(text => text
-				.setPlaceholder('value (e.g. project)')
+				.setPlaceholder('Value such as project')
 				.onChange((value) => newValue = value.trim()))
 			.addText(text => text
-				.setPlaceholder('folder (e.g. Projects)')
+				.setPlaceholder('Folder (e.g. Projects)')
 				.onChange((value) => newFolder = value.trim()))
 			.addButton(button => button
 				.setIcon('plus')
@@ -169,7 +175,13 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 
 					this.plugin.settings.rules.push({ property: newProperty, value: newValue, folder: newFolder });
 					await this.plugin.saveSettings();
-					this.display();
+					this.refreshSettingsDisplay();
 				}));
+	}
+
+	private refreshSettingsDisplay(): void {
+		// Keep using display() for compatibility with the declared minimum app version.
+		// eslint-disable-next-line @typescript-eslint/no-deprecated
+		this.display();
 	}
 }

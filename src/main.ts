@@ -1,10 +1,11 @@
-import { MarkdownView, Notice, Plugin, TFile } from 'obsidian';
-import { DEFAULT_SETTINGS, MetadataMoverSettings, MetadataMoverSettingsTab } from "./settings";
+import { Notice, Plugin, TFile } from 'obsidian';
+import { selectBestRule } from "./mapping.js";
+import { DEFAULT_SETTINGS, MetadataMoverSettings, MetadataMoverSettingsTab } from "./settings.js";
 
 // Remember to rename these classes and interfaces!
 
 export default class MetadataMover extends Plugin {
-	settings: MetadataMoverSettings;
+	settings!: MetadataMoverSettings;
 	private frontmatterHashes: Map<string, string> = new Map();
 
 	async onload() {
@@ -13,17 +14,8 @@ export default class MetadataMover extends Plugin {
 		this.registerEvent(this.app.vault.on('modify', (file) => {
 			if (!(file instanceof TFile) || file.extension !== 'md') return;
 
-			setTimeout(async () => {
-				const cached = this.app.metadataCache.getFileCache(file);
-				const fm = cached?.frontmatter;
-				if (!fm) return;
-
-				const currentHash = JSON.stringify(fm);
-				const previousHash = this.frontmatterHashes.get(file.path);
-				if (currentHash === previousHash) return;
-
-				this.frontmatterHashes.set(file.path, currentHash);
-				await this.moveFileByFrontmatter(file, fm);
+			setTimeout(() => {
+				void this.handleModifiedFile(file);
 			}, 50);
 		}));
 
@@ -43,7 +35,20 @@ export default class MetadataMover extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	async moveFileByFrontmatter(file: TFile, frontmatter?: Record<string, any>) {
+	private async handleModifiedFile(file: TFile): Promise<void> {
+		const cached = this.app.metadataCache.getFileCache(file);
+		const fm = cached?.frontmatter;
+		if (!fm) return;
+
+		const currentHash = JSON.stringify(fm);
+		const previousHash = this.frontmatterHashes.get(file.path);
+		if (currentHash === previousHash) return;
+
+		this.frontmatterHashes.set(file.path, currentHash);
+		await this.moveFileByFrontmatter(file, fm);
+	}
+
+	async moveFileByFrontmatter(file: TFile, frontmatter?: Record<string, unknown>) {
 		let fm = frontmatter;
 		if (!fm) {
 			const cached = this.app.metadataCache.getFileCache(file);
@@ -86,11 +91,7 @@ export default class MetadataMover extends Plugin {
 		}
 
 		// 3) mapping rules from user-configured settings
-		const ruleMatch = (this.settings.rules || []).find(rule => {
-			const value = String(fm[rule.property] ?? "").trim().toLowerCase();
-			return value === String(rule.value ?? "").trim().toLowerCase();
-		});
-
+		const ruleMatch = selectBestRule(fm, this.settings.rules || []);
 		if (ruleMatch) {
 			await this.ensureAndMove(file, ruleMatch.folder);
 			return;
@@ -130,7 +131,12 @@ export default class MetadataMover extends Plugin {
 			new Notice(`Moved to ${targetPath}`);
 		} catch (error) {
 			console.error(error);
-			new Notice(`Move failed: ${error}`);
+			const message = error instanceof Error
+				? error.message
+				: typeof error === 'string'
+					? error
+					: JSON.stringify(error) ?? 'Unknown error';
+			new Notice(`Move failed: ${message}`);
 		}
 	}
 }
