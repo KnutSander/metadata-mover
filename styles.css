@@ -1,8 +1,4 @@
-.metadata-mover-settings .metadata-mover-rule {
-	display: grid;
-	grid-template-columns: minmax(10rem, 1fr) minmax(0, 3fr);
-	gap: 0.75rem 1rem;
-	align-items: center;
+.metadata-mover-settings .metadata-mover-rule-summary {
 	margin: 0.75rem 0;
 	padding: 0.75rem;
 	border: 1px solid var(--background-modifier-border);
@@ -10,20 +6,39 @@
 	background: var(--background-secondary);
 }
 
-.metadata-mover-settings .metadata-mover-rule .setting-item-info {
+.metadata-mover-settings .metadata-mover-rule-summary .setting-item-info {
 	min-width: 0;
 }
 
-.metadata-mover-settings .metadata-mover-rule .setting-item-control {
+.metadata-mover-settings .metadata-mover-rule-summary .setting-item-name {
+	overflow-wrap: anywhere;
+}
+
+.metadata-mover-rule-modal .metadata-mover-condition {
+	margin: 0.5rem 0;
+	padding: 0.5rem;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-s);
+}
+
+.metadata-mover-rule-modal .metadata-mover-condition .setting-item-control {
 	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr)) repeat(3, auto);
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
 	gap: 0.5rem;
 	min-width: 0;
 }
 
-.metadata-mover-settings .metadata-mover-rule input {
+.metadata-mover-rule-modal .metadata-mover-condition input {
 	width: 100%;
 	min-width: 0;
+}
+
+.metadata-mover-rule-modal .metadata-mover-form-error {
+	color: var(--text-error);
+}
+
+.metadata-mover-rule-modal .metadata-mover-form-error:empty {
+	display: none;
 }
 
 .metadata-mover-empty-state {
@@ -35,12 +50,7 @@
 }
 
 @media (max-width: 700px) {
-	.metadata-mover-settings .metadata-mover-rule {
+	.metadata-mover-rule-modal .metadata-mover-condition .setting-item-control {
 		grid-template-columns: minmax(0, 1fr);
-		gap: 0.5rem;
-	}
-
-	.metadata-mover-settings .metadata-mover-rule .setting-item-control {
-		grid-template-columns: repeat(3, minmax(0, 1fr));
 	}
 }
