@@ -1,8 +1,46 @@
-/*
+.metadata-mover-settings .metadata-mover-rule {
+	display: grid;
+	grid-template-columns: minmax(10rem, 1fr) minmax(0, 3fr);
+	gap: 0.75rem 1rem;
+	align-items: center;
+	margin: 0.75rem 0;
+	padding: 0.75rem;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-secondary);
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.metadata-mover-settings .metadata-mover-rule .setting-item-info {
+	min-width: 0;
+}
 
-If your plugin does not need CSS, delete this file.
+.metadata-mover-settings .metadata-mover-rule .setting-item-control {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr)) repeat(3, auto);
+	gap: 0.5rem;
+	min-width: 0;
+}
 
-*/
+.metadata-mover-settings .metadata-mover-rule input {
+	width: 100%;
+	min-width: 0;
+}
+
+.metadata-mover-empty-state {
+	padding: 1rem;
+	border: 1px dashed var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	color: var(--text-muted);
+	text-align: center;
+}
+
+@media (max-width: 700px) {
+	.metadata-mover-settings .metadata-mover-rule {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 0.5rem;
+	}
+
+	.metadata-mover-settings .metadata-mover-rule .setting-item-control {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}

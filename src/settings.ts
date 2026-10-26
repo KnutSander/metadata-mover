@@ -35,6 +35,7 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 		const { containerEl } = this;
 
 		containerEl.empty();
+		containerEl.addClass('metadata-mover-settings');
 
 		new Setting(containerEl)
 			.setName('Up note behavior')
@@ -78,13 +79,27 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 
 
 		new Setting(containerEl)
-			.setName('Property:value → folder mapping')
+			.setName('Frontmatter rules')
+			.setDesc('Separate property names and values with semicolons in the same order. Every condition must match, and the most specific matching rule is used.')
 			.setHeading();
 
-		this.plugin.settings.rules.forEach((rule, index) => {
-			new Setting(containerEl)
+		const rules = this.plugin.settings.rules || [];
+		if (rules.length === 0) {
+			containerEl.createEl('p', {
+				text: 'No rules yet. Add a rule below to move notes based on their frontmatter.',
+				cls: 'metadata-mover-empty-state',
+			});
+		}
+
+		rules.forEach((rule, index) => {
+			const setting = new Setting(containerEl)
+				.setName(`Mapping ${index + 1}`)
+				.setDesc(`Move to ${rule.folder || 'no destination set'} when all conditions match.`);
+			setting.settingEl.addClass('metadata-mover-rule');
+
+			setting
 				.addText(text => text
-					.setPlaceholder('Property')
+					.setPlaceholder('Property or properties')
 					.setValue(rule.property)
 					.onChange(async (value) => {
 						const ruleToUpdate = this.plugin.settings.rules[index];
@@ -93,7 +108,7 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					}))
 				.addText(text => text
-					.setPlaceholder('Value')
+					.setPlaceholder('Value or values')
 					.setValue(rule.value)
 					.onChange(async (value) => {
 						const ruleToUpdate = this.plugin.settings.rules[index];
@@ -102,7 +117,7 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					}))
 				.addText(text => text
-					.setPlaceholder('Folder')
+					.setPlaceholder('Destination folder')
 					.setValue(rule.folder)
 					.onChange(async (value) => {
 						const ruleToUpdate = this.plugin.settings.rules[index];
@@ -154,15 +169,15 @@ export class MetadataMoverSettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Add new mapping')
-			.setDesc('Configure property:value → folder rules. Use semicolons for and logic, for example: type;status → project;archived')
+			.setDesc('For multiple conditions, separate properties and values with semicolons in matching order. Example: type;status and project;archived.')
 			.addText(text => text
-				.setPlaceholder('Property such as type')
+				.setPlaceholder('Property (type;status)')
 				.onChange((value) => newProperty = value.trim()))
 			.addText(text => text
-				.setPlaceholder('Value such as project')
+				.setPlaceholder('Value (project;archived)')
 				.onChange((value) => newValue = value.trim()))
 			.addText(text => text
-				.setPlaceholder('Folder (e.g. Projects)')
+				.setPlaceholder('Destination folder')
 				.onChange((value) => newFolder = value.trim()))
 			.addButton(button => button
 				.setIcon('plus')

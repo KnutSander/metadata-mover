@@ -1,7 +1,7 @@
 {
 	"id": "metadata-mover",
 	"name": "Metadata Mover",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"minAppVersion": "0.15.0",
 	"description": "Moves files to specific folders based on their frontmatter metadata.",
 	"author": "KnutSander",
